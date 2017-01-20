@@ -100,7 +100,27 @@
             ]
         });
 
-        example 4 paging:
+        example 5 paging, full table edit, multiple field:
+            var tb_data = [];
+            for (var i = 0; i < 106; i++) {
+                tb_data[i] = [Math.random()>0.5?true:false, Math.random(), "1970-01-01", Math.floor(Math.random()*10), i, 0];
+            }
+            tb_data[i] = "this is group"; i++;
+            tb_data[i] = ["this is text"]; i++;
+            for (; i < 578; i++) {
+                tb_data[i] = [i, Math.random(), "2017-02-01"];
+            }
+            var tb = new tbl(document.body.children[0], {
+                editable:true,select:tbl.single,must_select:true,paging:true,data:tb_data,page_size:15,
+                format: [
+                    { width: "5%", input: { type: "checkbox", check: "true" } },
+                    { width: "30%", name:"name", uneditable:true },
+                    { width: "20%", name:"date", input: { type: "date" } },
+                    { width: "10%", name:"select", input: {type:"select", options:[0,1,2,3,4,5,6,7,8,9]} },
+                    { width: "20%" },
+                    { width: "15%", input: {type:"radio", name:"only"}}
+                ]
+            });
 */
 
 
@@ -454,7 +474,7 @@ function tbl(div, option) {
         var input = document.createElement("input");
         input.setAttribute("type", "text");
         input.tbl = this;
-        input.placeholder = "搜索";
+        input.placeholder = "search";
         input.onchange = function () {
             search_result = [];
             if (this.value) {
