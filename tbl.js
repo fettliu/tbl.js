@@ -300,8 +300,18 @@ function tbl(div, option) {
                 if (option.select_change) option.select_change();
             }
         }
-        row.onmousedown = function () {if(option.select&&!(event.target instanceof HTMLInputElement))this.classList.add("tbl_active");}
-        row.onmouseup=function(){option.select&&this.classList.remove("tbl_active");}
+        row.onmousedown = function () {
+            if (option.select && !(event.target instanceof HTMLInputElement)) {
+                this.classList.add("tbl_active");
+                //document.body.setCapture();
+            }
+        }
+        row.onmouseup = function () {
+            if (option.select) {
+                this.classList.remove("tbl_active");
+                //this.releaseCapture();
+            }
+        }
         row.tblrow = rdata;
     }
     function visible(row) {
@@ -354,29 +364,38 @@ function tbl(div, option) {
     this.add = function (arg) {
         data.push(arg);
         var effect = false;
-        if (Array.isArray(arg))count++;
-        if(pages.length == 0 || (page == pages.length - 1 && pages[page].count < option.page_size))effect = true;
+        var isarr = Array.isArray(arg);
+        if (isarr) count++;
+        if(pages.length == 0|| option.page_size == 0 || (page == pages.length - 1 && pages[page].count < option.page_size))effect = true;
         if(effect){
-            var curlen = pages[page].length - 1;
-            while (body.children.length <= pages[page].length) body.appendChild(document.createElement("div"));
-            if (Array.isArray(arg))
-                set_row.call(this, body.children[curlen + 1], arg, !body.children[curlen].classList.contains("tbl_rowx"));
-            else
-                set_group(body.children[curlen + 1], arg);
+            var curpos = pages[page].length - 1;
+            var row;
+            if (body.children.length <= pages[page].length) { row = document.createElement("div"); body.appendChild(row); }
+            else { row = body.children[curpos + 1]; }
+            row.tblindex = data.length-1;
+            if (isarr) {
+                set_row.call(this, row, arg, !row.previousSibling.classList.contains("tbl_rowx"));
+            } else
+                set_group(row, arg);
         }
-        if (pages.length == 0 || pages[pages.length - 1].count >= option.page_size) {
-            var t = [arg]; t.count = 0;pages.push(t);
+        if (pages.length == 0 || (option.page_size !=0 && pages[pages.length - 1].count >= option.page_size)) {
+            var t = [arg]; t.count = 0; pages.push(t);
         } else
             pages[pages.length - 1].push(arg);
-        if (Array.isArray(arg))pages[pages.length - 1].count++;
+        if (isarr) pages[pages.length - 1].count++;
         tidy_info();
         return this;
     }
     this.insert = function (arg, index) {
         data.splice(index, 0, arg);
         do_paging();
+        if (option.must_select && data.length > 0) {
+            if (selects[0] != undefined) {
+                selects[0]++;
+                if (selects.last && selects.last.nextSibling) selects.last = selects.last.nextSibling;
+            }
+        } else selects = [];
         showpage.call(this);
-        selects = [];
         return this;
     }
     this.bind = function (newdata) {
@@ -391,11 +410,13 @@ function tbl(div, option) {
     this.delete = function (index) {
         data.splice(index, 1);
         delete edits[index];
-        remove_select.call(this, index);
-        if (option.must_select && !select[0] && data.length > 0) selects[0] = 0; else selects = [];
+        if (option.must_select && data.length > 0) {
+            if (selects[0] == index) selects[0] = 0; else if (selects[0] > index) { selects[0]--; selects.last = selects.last.previousSibling; }
+            if (selects.last && selects.last.nextSibling) selects.last = selects.last.nextSibling;
+        } else
+            remove_select.call(this, index);
         do_paging();
         showpage.call(this);
-        selects = [];
         return this;
     }
     this.edit = function (index) {
