@@ -303,14 +303,20 @@ function tbl(div, option) {
         row.onmousedown = function () {
             if (option.select && !(event.target instanceof HTMLInputElement)) {
                 this.classList.add("tbl_active");
-                //document.body.setCapture();
+                if (window.captureEvents) {
+                    window.captureEvents(Event.MOUSEMOVE | Event.MOUSEUP);
+                    window.captureObject = this;
+                    window.onmousemove = function (e) { return false; }
+                    window.onmouseup = function () {
+                        this.captureObject.classList.remove("tbl_active");
+                        delete this.captureObject;
+                        window.releaseEvents();
+                    }
+                }
             }
         }
-        row.onmouseup = function () {
-            if (option.select) {
-                this.classList.remove("tbl_active");
-                //this.releaseCapture();
-            }
+        if (!window.captureEvents) window.onmouseup = function () {
+            if(option.select) this.captureObject.classList.remove("tbl_active");
         }
         row.tblrow = rdata;
     }
