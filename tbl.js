@@ -253,7 +253,7 @@ function tbl(div, option) {
                         if (inputattrs && inputattrs.type && (inputattrs.type == "checkbox" || inputattrs.type == "radio")) {
                             input.checked = !!rdata[f]; if (inputattrs.type == "radio"){input.tbl=this;if(input.checked)fmt.prev = input;}
                         } else
-                            if(rdata[f])input.value = rdata[f];
+                            if(rdata[f]!=undefined)input.value = rdata[f];
                     }
                     if (inputattrs && inputattrs.type && (inputattrs.type == "checkbox" || inputattrs.type == "radio")) {
                         input.onchange = function () {
@@ -303,19 +303,19 @@ function tbl(div, option) {
         row.onmousedown = function () {
             if (option.select && !(event.target instanceof HTMLInputElement)) {
                 this.classList.add("tbl_active");
-                if (window.captureEvents) {
-                    window.captureEvents(Event.MOUSEMOVE | Event.MOUSEUP);
-                    window.captureObject = this;
-                    window.onmousemove = function (e) { return false; }
-                    window.onmouseup = function () {
+                if (captureEvents) {
+                    captureEvents(Event.MOUSEUP);
+                    captureObject = this;
+                    onmouseup = function () {
                         this.captureObject.classList.remove("tbl_active");
                         delete this.captureObject;
-                        window.releaseEvents();
+                        releaseEvents();
+                        this.onmouseup = null;
                     }
                 }
             }
         }
-        if (!window.captureEvents) window.onmouseup = function () {
+        if (!captureEvents) row.onmouseup = function () {
             if(option.select) this.captureObject.classList.remove("tbl_active");
         }
         row.tblrow = rdata;
