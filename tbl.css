@@ -9,12 +9,12 @@
 .tbl_booter{background-color:gray;border-bottom:1px solid black;border-left:1px solid black;border-right:1px solid black;box-sizing:border-box;padding:3px;}
 .tbl_info{color:white;float:left;font-size:-1pt;}
 .tbl_paging{color:black;float:right;height:20px;overflow:hidden;display:table}
-.tbl_paging span{vertical-align:middle;background-color:#dddddd;display:inline-block;width:20px;height:100%;line-height:100%;text-align:center;cursor:default}
-.tbl_paging span:hover{background-color:#eeeeee;}
-.tbl_paging span:active{background-color:#ffffff;}
-.tbl_paging button{height:100%;border:0px;padding:0px;}
-.tbl_paging input{height:100%;border:0px;padding:0px;width:25px}
-.tbl_cell{float:left;text-overflow:ellipsis;overflow:hidden;;white-space:nowrap}
+.tbl_paging div{float:left;vertical-align:middle;background-color:#dddddd;width:20px;height:20px;line-height:20px;text-align:center;cursor:default}
+.tbl_paging div:hover{background-color:#eeeeee;}
+.tbl_paging div:active{background-color:#ffffff;}
+.tbl_paging button{height:20px;padding:0px;float:left;border:0px}
+.tbl_paging input{height:20px;padding:0px;width:25px;box-sizing:border-box;border:0px;float:left}
+.tbl_cell{float:left;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
 .tbl_visible{display:normal}
 .tbl_hide{display:none}
 .tbl_row{background-color:#e5e5e5;border-bottom:1px solid black;box-sizing:border-box;padding:5px;min-height:30px;height:0px;}

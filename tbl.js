@@ -38,7 +38,7 @@
             tbl::cancel_edit(index)             cancel edit of row.
             tbl::select(index)                      select row.
             tbl::cancel_select(index)           cancel select row.
-            tbl::select_change(func)           set select changed event.
+            tbl::select_change(func)           set select changed event. function(tbl){event.source is tbl}
 
             readonly property:
                 tbl::selects                                get array of selected row indexes.
@@ -93,7 +93,7 @@
         example 4 list style, no header, no search, no title, no footer, no paging bar. delete row, button in row, nancenter:
             html:<html><body><div></div></body></html>
             var tb = new tbl(document.body.children[0], {
-            editable: false, maxheight: "300px", header: false, title: false, footer: false, data: [[1], [2, "remove"], ["nan - not a number", "del"], [4, "del"], [5, "del"]], page_size: 100,
+            editable: false, max_height: "300px", header: false, title: false, footer: false, data: [[1], [2, "remove"], ["nan - not a number", "del"], [4, "del"], [5, "del"]], page_size: 100,
             format: [
                 { width: "90%", nancenter: true, input: {type:"text"}},
                 { width: "10%", editable:true, input: { type: "button", value:"del", onclick: function () { tb.delete(tb.get_related_rowid(this));}}}
@@ -168,11 +168,11 @@ function tbl(div, option) {
 .tbl_booter{background-color:gray;border-bottom:1px solid black;border-left:1px solid black;border-right:1px solid black;box-sizing:border-box;padding:3px;}\
 .tbl_info{color:white;float:left;font-size:-1pt;}\
 .tbl_paging{color:black;float:right;height:20px;overflow:hidden;display:table}\
-.tbl_paging span{vertical-align:middle;background-color:#dddddd;display:inline-block;width:20px;height:100%;line-height:100%;text-align:center;cursor:default}\
-.tbl_paging span:hover{background-color:#eeeeee;}\
-.tbl_paging span:active{background-color:#ffffff;}\
-.tbl_paging button{height:100%;border:0px;padding:0px;}\
-.tbl_paging input{height:100%;border:0px;padding:0px;width:25px}\
+.tbl_paging div{float:left;vertical-align:middle;background-color:#dddddd;width:20px;height:20px;line-height:20px;text-align:center;cursor:default}\
+.tbl_paging div:hover{background-color:#eeeeee;}\
+.tbl_paging div:active{background-color:#ffffff;}\
+.tbl_paging button{height:20px;padding:0px;float:left;border:0px}\
+.tbl_paging input{height:20px;padding:0px;width:25px;box-sizing:border-box;border:0px;float:left}\
 .tbl_cell{float:left;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}\
 .tbl_visible{display:normal}\
 .tbl_hide{display:none}\
@@ -275,7 +275,8 @@ function tbl(div, option) {
             row.appendChild(cell);
         }
         row.onmouseover = function () {if(option.select)this.classList.add("tbl_over");}
-        row.onmouseleave = function () {if(option.select)this.classList.remove("tbl_over");}
+        row.onmouseleave = function () { if (option.select) this.classList.remove("tbl_over"); }
+        row.tbl = this;
         row.onclick = function () {
             if (option.select && !(event.target instanceof HTMLInputElement)) {
                 if (option.select == 1) {
@@ -297,7 +298,7 @@ function tbl(div, option) {
                         this.classList.add("tbl_select");
                     }
                 }
-                if (option.select_change) option.select_change();
+                if (option.select_change) { event.source = this.tbl; event.row_index = this.tblindex; option.select_change(this.tbl); }
             }
         }
         row.onmousedown = function () {
@@ -372,22 +373,22 @@ function tbl(div, option) {
         var effect = false;
         var isarr = Array.isArray(arg);
         if (isarr) count++;
-        if(pages.length == 0|| option.page_size == 0 || (page == pages.length - 1 && pages[page].count < option.page_size))effect = true;
+        if (pages.length == 0) { pages.push([]); pages[0].count = 0; effect = true; tbl_show(body);tbl_hide(nothing);}
+        else if (option.page_size == 0 || (page == pages.length - 1 && pages[page].count < option.page_size)) effect = true;
         if(effect){
-            var curpos = pages[page].length - 1;
             var row;
             if (body.children.length <= pages[page].length) { row = document.createElement("div"); body.appendChild(row); }
-            else { row = body.children[curpos + 1]; }
+            else { row = body.children[pages[page].length]; }
             row.tblindex = data.length-1;
             if (isarr) {
-                set_row.call(this, row, arg, !row.previousSibling.classList.contains("tbl_rowx"));
+                set_row.call(this, row, arg, row.previousSibling?!row.previousSibling.classList.contains("tbl_rowx"):false);
             } else
                 set_group(row, arg);
         }
-        if (pages.length == 0 || (option.page_size !=0 && pages[pages.length - 1].count >= option.page_size)) {
-            var t = [arg]; t.count = 0; pages.push(t);
+        if ((option.page_size !=0 && pages[pages.length - 1].count >= option.page_size)) {
+            var t = [{ row: data.length - 1, data:arg}]; t.count = 0; pages.push(t);
         } else
-            pages[pages.length - 1].push(arg);
+            pages[pages.length - 1].push({row:data.length-1, data:arg });
         if (isarr) pages[pages.length - 1].count++;
         tidy_info();
         return this;
@@ -538,6 +539,10 @@ function tbl(div, option) {
         body = document.createElement("div");
         body.className = "tbl_body tbl_hide";
         div.appendChild(body);
+        nothing = document.createElement("div");
+        nothing.className = "tbl_null";
+        nothing.innerHTML = "<center><b>" + (option.null ? option.null : "no record") + "</b></center>";
+        div.appendChild(nothing);
         // footer
         footer = document.createElement("div");
         footer.className = "tbl_booter";
@@ -546,22 +551,22 @@ function tbl(div, option) {
         footer.appendChild(info);
         paging = document.createElement("div");
         paging.className = "tbl_paging";
-        ph = document.createElement("span");
+        ph = document.createElement("div");
         ph.textContent = "⇤";
         ph.onselectstart = function () { return false; }
         ph.tbl = this;
         ph.onclick = function () { if (page != 0) { page = 0; showpage.call(this.tbl); } }
-        pp = document.createElement("span");
+        pp = document.createElement("div");
         pp.textContent = "«";
         pp.onselectstart = function () { return false; }
         pp.tbl = this;
         pp.onclick = function () { if (page > 0) { page--; showpage.call(this.tbl); } }
-        pn = document.createElement("span");
+        pn = document.createElement("div");
         pn.textContent = "»";
         pn.onselectstart = function () { return false; }
         pn.tbl = this;
         pn.onclick = function () { if (page < pages.length - 1) { page++; showpage.call(this.tbl); } }
-        pe= document.createElement("span");
+        pe= document.createElement("div");
         pe.textContent = "⇥";
         pe.onselectstart = function () { return false; }
         pe.tbl = this;
@@ -574,6 +579,7 @@ function tbl(div, option) {
         paging.appendChild(pe);
         input_pagenumber = document.createElement("input");
         input_pagenumber.setAttribute("type", "number");
+        input_pagenumber.setAttribute("min", 1);
         input_pagenumber.onkeypress = function (e) {if (e.keyCode == 13) go();}
         paging.appendChild(input_pagenumber);
         var gobtn = document.createElement("button");
@@ -582,12 +588,8 @@ function tbl(div, option) {
         footer.style.minHeight = "30px";
         footer.appendChild(paging);
         div.appendChild(footer);
-        nothing = document.createElement("div");
-        nothing.className = "tbl_null";
-        nothing.innerHTML = "<center><b>" + (option.null ? option.null : "no record") + "</b></center>";
-        div.appendChild(nothing);
-        if (option.maxheight) {
-            body.style.maxHeight = option.maxheight;
+        if (option.max_height) {
+            body.style.maxHeight = option.max_height;
             body.style.overflowY = "auto";
         }
         if (!option.title) tbl_hide(title);
