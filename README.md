@@ -57,8 +57,8 @@ table implement use div.support list style, single/multiple select, full table o
      footer                                   whether show footer. include info and paging.
      info                                       whether show info of table.
      paging                                  whether show paging bar.
-     title_bar                                whether show title bar. include title text and search box.
-     title                                       title text.
+     title                                  whether show title bar. include title text and search box.
+     caption                                       title text.
      search                                   whether show search box.
      editable                                enable full table edit.
      select                                    valid value:0, can't select. 1, single select. 2, multiple select.
