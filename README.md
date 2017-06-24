@@ -13,13 +13,13 @@ version:
   Designed for Microsoft Edge / Google Chrome.
 
 # main features:
-     not a number center.
      data bind.
      search and filter.
      paging.
-     max length and scroll.
      full table edit, full row edit. text, boolean, enum, date, number, email, etc.
      single select, multiple select.
+     sub table.
+     row/cell custom.
 
 # doc:
 ##        dom struct:
