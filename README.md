@@ -1,6 +1,9 @@
 # tbl.js
 table implement use div.support list style, single/multiple select, full table or row edit, paging, full table search.
 
+version:
+2017/6/24 : Recode by TypeScript. 
+
 # info
   2017/1/8
   version 0.1beta
