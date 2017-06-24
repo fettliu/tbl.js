@@ -1,4 +1,4 @@
-/* copyright fyter
+﻿/* copyright fyter
     2017/1/8
     version 0.1beta
     website:http://fyter.cn, http://loonglang.com
@@ -123,96 +123,82 @@
                 ]
             });
 */
+
+
+
+declare function captureEvents(arg: number): void;
+
 /**
 *   DIV表格
 *
 * @see {@link https://space.loonglang.com/docs/}
 *
 */
-var tbl = (function () {
+class tbl {
+
+    static single = 1;
+    static multiselect = 2;
+
+    private div: HTMLElement;
+    private option: any;
+    private header: HTMLDivElement;
+    private title: HTMLDivElement;
+    private search: HTMLDivElement;
+    private body: HTMLDivElement;
+    private nothing: HTMLDivElement;
+    private footer: HTMLDivElement;
+    private info: HTMLDivElement;
+    private ph: HTMLDivElement;
+    private pp: HTMLDivElement;
+    private pn: HTMLDivElement;
+    private pe: HTMLDivElement;
+    private paging: HTMLDivElement;
+    private input_pagenumber: HTMLInputElement;
+    private _data: any[][] = [];
+    private search_result: any[][] = [];
+    private page: number;
+    private data_page:number;// for search
+    private _selects = [];
+    private _edits = [];
+    private pages = [];
+    private count = 0;
+
+    get data() { return this._data };
+    get selects() { return this._selects;}
+    get dom() { return this.div;}
+    get edits() { return this._edits;}
     /**
     *   DIV表格
     *
     *   @param div HTML DIV节点
     *   @param option 选项，请参考文档
     */
-    function tbl(div, option) {
-        this._data = [];
-        this.search_result = [];
-        this._selects = [];
-        this._edits = [];
-        this.pages = [];
-        this.count = 0;
-        if (!div)
-            this.div = document.createElement("div");
-        else if (typeof div == "string")
-            if (div[0] != '#')
-                throw Error("argument error.");
-            else
-                this.div = document.getElementById(div.substr(1));
-        else
-            this.div = div;
-        if (!option)
-            option = {}; // else option = JSON.parse(JSON.stringify(option));// clone(slow but simple)
-        if (option.data)
-            this._data = option.data;
+    constructor(div?: HTMLElement | string, option?: any) {
+        if(!div)this.div = document.createElement("div");
+        else if (typeof div == "string") if (div[0] != '#') throw Error("argument error."); else this.div = document.getElementById(div.substr(1));
+        else this.div = <HTMLElement>div;
+        if (!option) option = {};// else option = JSON.parse(JSON.stringify(option));// clone(slow but simple)
+        if (option.data) this._data = option.data;
         this.page = option.page ? option.page : 0;
         if (!option.format) {
-            option.format = [{ width: "100%" }];
-            option.header = false;
+            option.format = [{ width: "100%" }]; option.header = false;
         }
         this.option = option;
         delete this.option.data;
-        if (!option.page_size)
-            option.page_size = 0;
-        if (option.info == undefined)
-            option.info = true;
-        if (option.footer == undefined)
-            if (option.format.length > 1)
-                option.footer = true;
-            else
-                option.footer = false;
-        if (option.header == undefined)
-            if (option.format.length > 1)
-                option.header = true;
-            else
-                option.header = false;
-        if (option.title == undefined)
-            option.title = true;
-        if (option.paging == undefined)
-            option.paging = true;
-        if (option.search == undefined)
-            option.search = true;
-        if (option.select == undefined)
-            option.select = 0; // 0 for disable select, 1 for single select, 2 for multiple select
+        if (!option.page_size) option.page_size = 0;
+        if (option.info == undefined) option.info = true;
+        if (option.footer == undefined) if (option.format.length > 1) option.footer = true; else option.footer = false;
+        if (option.header == undefined) if (option.format.length > 1) option.header = true; else option.header = false;
+        if (option.title == undefined) option.title = true;
+        if (option.paging == undefined) option.paging = true;
+        if (option.search == undefined) option.search = true;
+        if (option.select == undefined) option.select = 0;// 0 for disable select, 1 for single select, 2 for multiple select
         this.init();
     }
-    Object.defineProperty(tbl.prototype, "data", {
-        get: function () { return this._data; },
-        enumerable: true,
-        configurable: true
-    });
-    ;
-    Object.defineProperty(tbl.prototype, "selects", {
-        get: function () { return this._selects; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(tbl.prototype, "dom", {
-        get: function () { return this.div; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(tbl.prototype, "edits", {
-        get: function () { return this._edits; },
-        enumerable: true,
-        configurable: true
-    });
-    tbl.prototype.load_style = function () {
-        for (var s in document.styleSheets) {
+    private load_style() {
+        for (let s in document.styleSheets) {
             var styles = document.styleSheets[s];
-            if (styles.title == "tbl_style" || (styles.href && styles.href.lastIndexOf("tbl.css") != -1))
-                return;
+            if (styles.title == "tbl_style" || (styles.href && styles.href.lastIndexOf("tbl.css") != -1)) return;
         }
         var style = document.createElement("style");
         style.setAttribute("type", "text/css");
@@ -252,402 +238,290 @@ var tbl = (function () {
 .tbl_row_edit div input[type=password]{width:100%;height:100%;box-sizing:border-box;}\
 .tbl_null{border-bottom:1px solid black;border-top:1px solid black;border-left:1px solid black;border-right:1px solid black;box-sizing:border-box;padding:5px;min-height:30px;}\
 ";
-        if (style.styleSheet) {
-            style.styleSheet.cssText = css;
-        }
-        else {
+        if ((<any>style).styleSheet) {
+            (<any>style).styleSheet.cssText = css;
+        } else {
             var tn = document.createTextNode(css);
             style.appendChild(tn);
         }
         document.head.appendChild(style);
-    };
-    tbl.prototype.tbl_hide = function (dom) { dom.classList.add("tbl_hide"); };
-    tbl.prototype.tbl_show = function (dom) { dom.classList.remove("tbl_hide"); };
-    tbl.prototype.tidy_info = function () {
+    }
+    private tbl_hide(dom) { dom.classList.add("tbl_hide"); }
+    private tbl_show(dom) { dom.classList.remove("tbl_hide"); }
+    private tidy_info() {
         this.info.textContent = this.count ? ((this.page + 1) + "/" + this.pages.length + " total " + this.count) : "";
-        if (this.page > 0) {
-            this.ph.classList.remove("tbl_hide");
-            this.pp.classList.remove("tbl_hide");
-        }
-        if (this.page < this.pages.length) {
-            this.pn.classList.remove("tbl_hide");
-            this.pe.classList.remove("tbl_hide");
-        }
-    };
-    tbl.prototype.set_group = function (row, title) {
+        if (this.page > 0) { this.ph.classList.remove("tbl_hide"); this.pp.classList.remove("tbl_hide"); }
+        if (this.page < this.pages.length) { this.pn.classList.remove("tbl_hide"); this.pe.classList.remove("tbl_hide"); }
+    }
+    private set_group(row, title) {
         row.innerHTML = title;
         row.className = "tbl_row tbl_group";
-    };
-    tbl.prototype.do_paging = function () {
+    }
+    
+    private do_paging() {
         this.pages = [];
         this.count = 0;
-        var page = [];
+        var page: any[] | any = [];
         var curcnt = 0;
         var pointer = this.search_result.length > 0 ? this.search_result : this._data;
-        for (var i = 0; i < pointer.length; i++) {
-            if (this.option.page_size > 0 && curcnt == this.option.page_size) {
-                page.count = curcnt;
-                this.pages.push(page);
-                page = [];
-                curcnt = 0;
-            }
-            if (Array.isArray(this.search_result.length > 0 ? pointer[i].data : pointer[i])) {
-                this.count++;
-                curcnt++;
-            }
+        for (let i = 0; i < pointer.length; i++) {
+            if (this.option.page_size > 0 && curcnt == this.option.page_size) { page.count = curcnt; this.pages.push(page); page = []; curcnt = 0; }
+            if (Array.isArray(this.search_result.length > 0 ? (<any>pointer[i]).data : pointer[i])) { this.count++; curcnt++; }
             page.push(this.search_result.length > 0 ? pointer[i] : { row: i, data: pointer[i] });
         }
-        if (page.length > 0) {
-            page.count = curcnt;
-            this.pages.push(page);
+        if (page.length > 0) { page.count = curcnt; this.pages.push(page); }
+    }
+    private remove_select(index) {
+        for (let item in this._selects) if (this._selects[item] == index) {
+            this._selects.splice(Number(item), 1);
+            return true;
         }
-    };
-    tbl.prototype.remove_select = function (index) {
-        for (var item in this._selects)
-            if (this._selects[item] == index) {
-                this._selects.splice(Number(item), 1);
-                return true;
-            }
-    };
-    tbl.prototype.set_row = function (row, rdata, colored) {
-        var _this = this;
+    }
+    private set_row(row:HTMLDivElement, rdata, colored:boolean) {
         row.innerHTML = "";
-        row.className = (this.option.editable || this._edits[row.tblindex]) ? (colored ? "tbl_row_edit tbl_rowx" : "tbl_row tbl_row_edit") : (colored ? "tbl_rowx" : "tbl_row");
-        for (var f in this.option.format) {
-            var cell = document.createElement("div");
+        row.className = (this.option.editable || this._edits[(<any>row).tblindex]) ? (colored ? "tbl_row_edit tbl_rowx" : "tbl_row tbl_row_edit") : (colored ? "tbl_rowx" : "tbl_row");
+        for (let f in this.option.format) {
+            var cell = <any>document.createElement("div");
             cell.className = "tbl_cell";
             var fmt = this.option.format[f];
-            if (fmt.width)
-                cell.style.width = fmt.width;
+            if (fmt.width) cell.style.width = fmt.width;
             if (fmt.editable || rdata[f] != undefined && rdata[f] != null) {
                 if (fmt.element && rdata[f] instanceof HTMLElement) {
                     cell.appendChild(rdata[f]);
-                }
-                else if (fmt.editable || (!fmt.uneditable && (this.option.editable || this._edits[row.tblindex]))) {
+                } else if (fmt.editable || (!fmt.uneditable && (this.option.editable || this._edits[(<any>row).tblindex]))) {
                     var inputattrs = fmt.input, input;
                     if (inputattrs && inputattrs.type && inputattrs.type == "select") {
                         input = document.createElement("select");
-                        for (var _i = 0, _a = inputattrs.options; _i < _a.length; _i++) {
-                            var sel = _a[_i];
-                            var op = document.createElement("option");
-                            op.text = sel;
-                            op.value = sel;
-                            input.add(op);
-                        }
-                        ;
+                        for (let sel of inputattrs.options) { var op = document.createElement("option"); op.text = sel; op.value = sel; input.add(op) };
                         input.value = rdata[f];
-                    }
-                    else {
+                    } else {
                         input = document.createElement("input");
                         if (!inputattrs) {
                             input.type = "text";
+                        } else for (let attr in inputattrs) {
+                            input[attr] = inputattrs[attr];
                         }
-                        else
-                            for (var attr in inputattrs) {
-                                input[attr] = inputattrs[attr];
-                            }
                         if (inputattrs && inputattrs.type && (inputattrs.type == "checkbox" || inputattrs.type == "radio")) {
-                            input.checked = !!rdata[f];
-                            if (inputattrs.type == "radio") {
-                                input.tbl = this;
-                                if (input.checked)
-                                    fmt.prev = input;
-                            }
-                        }
-                        else if (rdata[f] != undefined)
-                            input.value = rdata[f];
+                            input.checked = !!rdata[f]; if (inputattrs.type == "radio") { input.tbl = this; if (input.checked) fmt.prev = input; }
+                        } else
+                            if (rdata[f] != undefined) input.value = rdata[f];
                     }
                     if (inputattrs && inputattrs.type && (inputattrs.type == "checkbox" || inputattrs.type == "radio")) {
                         input.onchange = function () {
                             if (this.type == "radio") {
-                                var prev = this.option.format[this.parentNode.tblfield].prev;
-                                if (prev)
-                                    prev.parentNode.parentNode.tblrow[prev.parentNode.tblfield] = false;
+                                let prev = this.option.format[this.parentNode.tblfield].prev; if (prev) prev.parentNode.parentNode.tblrow[prev.parentNode.tblfield] = false;
                             }
-                            this.parentNode.parentNode.tblrow[this.parentNode.tblfield] = this.checked;
-                            this.option.format[this.parentNode.tblfield].prev = this;
-                        };
-                    }
-                    else {
-                        input.onchange = function () { this.parentNode.parentNode.tblrow[this.parentNode.tblfield] = this.value; };
+                            this.parentNode.parentNode.tblrow[this.parentNode.tblfield] = this.checked; this.option.format[this.parentNode.tblfield].prev = this;
+                        }
+                    } else {
+                        input.onchange = function () { this.parentNode.parentNode.tblrow[this.parentNode.tblfield] = this.value; }
                     }
                     cell.appendChild(input);
-                }
-                else {
+                } else {
                     cell.innerHTML = rdata[f];
-                    if (fmt.tip)
-                        cell.title = rdata[f];
+                    if (fmt.tip) cell.title = rdata[f];
                 }
             }
-            if (fmt.nancenter && isNaN(rdata[f]))
-                cell.style.textAlign = "center";
+            if (fmt.nancenter && isNaN(rdata[f])) cell.style.textAlign = "center";
             cell.tblfield = f;
             row.appendChild(cell);
         }
-        row.onmouseover = function () { if (_this.option.select)
-            row.classList.add("tbl_over"); };
-        row.onmouseleave = function () { if (_this.option.select)
-            row.classList.remove("tbl_over"); };
-        row.tbl = this;
-        row.onclick = function () {
-            if (_this.option.select && !(event.target instanceof HTMLInputElement)) {
-                if (_this.option.select == 1) {
-                    if (_this._selects.last == _this && !_this.option.must_select) {
+        row.onmouseover = () => { if (this.option.select) row.classList.add("tbl_over"); }
+        row.onmouseleave = () => { if (this.option.select) row.classList.remove("tbl_over"); }
+        (<any>row).tbl = this;
+        row.onclick = ()=>{
+            if (this.option.select && !(event.target instanceof HTMLInputElement)) {
+                if (this.option.select == 1) {
+                    if ((<any>this._selects).last == this && !this.option.must_select) {
                         row.classList.remove("tbl_select");
-                        delete _this._selects.last;
-                        _this._selects = [];
-                    }
-                    else {
-                        if (_this._selects.last)
-                            _this._selects.last.classList.remove("tbl_select");
-                        _this._selects[0] = row.tblindex;
-                        _this._selects.last = row;
+                        delete (<any>this._selects).last;
+                        this._selects = [];
+                    } else {
+                        if ((<any>this._selects).last) (<any>this._selects).last.classList.remove("tbl_select");
+                        this._selects[0] = (<any>row).tblindex;
+                        (<any>this._selects).last = row;
                         row.classList.toggle("tbl_select");
                     }
-                }
-                else {
-                    if (_this.remove_select(row.tblindex))
+                } else {
+                    if (this.remove_select((<any>row).tblindex))
                         row.classList.remove("tbl_select");
                     else {
-                        _this._selects.push(row.tblindex);
+                        this._selects.push((<any>row).tblindex);
                         row.classList.add("tbl_select");
                     }
                 }
-                if (_this.option.select_change) {
-                    event.source = row.tbl;
-                    event.row_index = row.tblindex;
-                    _this.option.select_change(row.tbl);
+                if (this.option.select_change) {
+                    (<any>event).source = (<any>row).tbl;
+                    (<any>event).row_index = (<any>row).tblindex;
+                    this.option.select_change((<any>row).tbl);
                 }
             }
-        };
-        row.onmousedown = function () {
-            if (_this.option.select && !(event.target instanceof HTMLInputElement)) {
+        }
+        row.onmousedown = ()=>{
+            if (this.option.select && !(event.target instanceof HTMLInputElement)) {
                 row.classList.add("tbl_active");
                 if (captureEvents) {
-                    captureEvents(Event.MOUSEUP);
-                    window.tblCaptureObject = row;
-                    row.onmouseup = function () {
-                        window.tblCaptureObject.classList.remove("tbl_active");
-                        delete window.tblCaptureObject;
+                    captureEvents((<any>Event).MOUSEUP);
+                    (<any>window).tblCaptureObject = row;
+                    row.onmouseup = ()=>{
+                        (<any>window).tblCaptureObject.classList.remove("tbl_active");
+                        delete (<any>window).tblCaptureObject;
                         releaseEvents();
                         row.onmouseup = null;
-                    };
+                    }
                 }
             }
-        };
-        if (!captureEvents)
-            row.onmouseup = function () {
-                if (_this.option.select)
-                    window.tblCaptureObject.classList.remove("tbl_active");
-            };
-        row.tblrow = rdata;
-    };
-    tbl.prototype.visible = function (row) {
+        }
+        if (!captureEvents) row.onmouseup = ()=>{
+            if (this.option.select) (<any>window).tblCaptureObject.classList.remove("tbl_active");
+        }
+        (<any>row).tblrow = rdata;
+    }
+    private visible(row) {
         return (row >= this.page * this.option.page_size && row < this.page * this.option.page_size + this.option.page_size);
-    };
-    tbl.prototype.get_row = function (index) {
-        if (this.search_result.length > 0)
-            return;
-        if (this.body.children.length == 0)
-            return;
-        if (this.body.firstChild.tblindex > index || this.body.lastChild.tblindex < index)
-            return; // select only current page's row
-        for (var i = 0; i < this.body.children.length; i++) {
-            if (this.body.children[i].tblindex == index) {
+    }
+    private get_row(index) {
+        if (this.search_result.length > 0) return;
+        if (this.body.children.length == 0) return;
+        if ((<any>this.body.firstChild).tblindex > index || (<any>this.body.lastChild).tblindex < index) return;// select only current page's row
+        for (let i = 0; i < this.body.children.length; i++) {
+            if ((<any>this.body.children[i]).tblindex == index) {
                 return this.body.children[i];
             }
         }
-    };
-    tbl.prototype.showpage = function () {
-        var pointer = this.search_result.searching ? this.search_result : this._data;
+    }
+    private showpage() {
+        var pointer = (<any>this.search_result).searching ? this.search_result : this._data;
         if (pointer.length > 0) {
-            this.tbl_show(this.body);
-            this.tbl_hide(this.nothing);
+            this.tbl_show(this.body); this.tbl_hide(this.nothing);
             var pagedata = this.pages[this.page];
-            for (var i = this.body.children.length; i < pagedata.length; i++) {
-                var row = document.createElement("div");
+            for (let i = this.body.children.length; i < pagedata.length; i++) {
+                let row = document.createElement("div");
                 row.className = "tbl_row";
                 this.body.appendChild(row);
             }
-            for (var i = 0, j = false; i < this.body.children.length; i++) {
-                if (i > pagedata.length - 1) {
-                    this.tbl_hide(this.body.children[i]);
-                    continue;
-                }
-                var row = this.body.children[i];
+            for (let i = 0, j = false; i < this.body.children.length; i++) {
+                if (i > pagedata.length - 1) { this.tbl_hide(this.body.children[i]); continue; }
+                let row = this.body.children[i] as any;
                 var row_data = pagedata[i].data;
                 row.tblindex = pagedata[i].row;
                 this.tbl_show(row);
                 if (Array.isArray(row_data)) {
                     this.set_row.call(this, row, row_data, j = !j);
-                }
-                else if (row_data instanceof Object) {
+                } else if (row_data instanceof Object) {// custom
                     if (row_data.draw && row_data.draw instanceof Function)
                         row_data.draw.call(row_data, this, row, j);
                     j = !j;
+                } else {// grouping
+                    this.set_group(row, row_data); j = false;
                 }
-                else {
-                    this.set_group(row, row_data);
-                    j = false;
-                }
-                for (var _i = 0, _a = this._selects; _i < _a.length; _i++) {
-                    var s = _a[_i];
+                for (let s of this._selects) {
                     if (s == pagedata[i].row) {
                         row.classList.add("tbl_select");
-                        if (this.option.select == 1)
-                            this._selects.last = row;
+                        if (this.option.select == 1) (<any>this._selects).last = row;
                     }
                 }
             }
             this.body.scrollTop = 0;
-        }
-        else {
-            this.tbl_show(this.nothing);
-            this.tbl_hide(this.body);
+        } else {
+            this.tbl_show(this.nothing); this.tbl_hide(this.body);
         }
         this.tidy_info();
-    };
-    tbl.prototype.get_related_rowid = function (dom) {
-        if (dom)
-            while (dom.parentNode)
-                if (dom.parentNode.classList.contains("tbl_row") || dom.parentNode.classList.contains("tbl_rowx"))
-                    return dom.parentNode.tblindex;
-                else
-                    dom = dom.parentNode;
-    };
-    tbl.prototype.add = function (arg) {
+    }
+    get_related_rowid (dom:any) {
+        if (dom) while (dom.parentNode) if (dom.parentNode.classList.contains("tbl_row") || dom.parentNode.classList.contains("tbl_rowx")) return dom.parentNode.tblindex; else dom = dom.parentNode;
+    }
+    add (arg:any) {
         this._data.push(arg);
         var effect = false;
         var isarr = Array.isArray(arg);
-        if (isarr)
-            this.count++;
-        if (this.pages.length == 0) {
-            this.pages.push([]);
-            this.pages[0].count = 0;
-            effect = true;
-            this.tbl_show(this.body);
-            this.tbl_hide(this.nothing);
-        }
-        else if (this.option.page_size == 0 || (this.page == this.pages.length - 1 && this.pages[this.page].count < this.option.page_size))
-            effect = true;
+        if (isarr) this.count++;
+        if (this.pages.length == 0) { this.pages.push([]); this.pages[0].count = 0; effect = true; this.tbl_show(this.body); this.tbl_hide(this.nothing); }
+        else if (this.option.page_size == 0 || (this.page == this.pages.length - 1 && this.pages[this.page].count < this.option.page_size)) effect = true;
         if (effect) {
             var row;
-            if (this.body.children.length <= this.pages[this.page].length) {
-                row = document.createElement("div");
-                this.body.appendChild(row);
-            }
-            else {
-                row = this.body.children[this.pages[this.page].length];
-            }
+            if (this.body.children.length <= this.pages[this.page].length) { row = document.createElement("div"); this.body.appendChild(row); }
+            else { row = this.body.children[this.pages[this.page].length]; }
             row.tblindex = this._data.length - 1;
             this.tbl_show(row);
             if (isarr) {
                 this.set_row.call(this, row, arg, row.previousSibling ? !row.previousSibling.classList.contains("tbl_rowx") : false);
-            }
-            else if (arg instanceof Object) {
+            } else if (arg instanceof Object) {// custom
                 if (arg.draw && arg.draw instanceof Function)
                     arg.draw.call(arg, this, row, row.previousSibling ? !row.previousSibling.classList.contains("tbl_rowx") : false);
-            }
-            else {
+            } else {
                 this.set_group(row, arg);
             }
             if (this.option.must_select && this._selects.length == 0) {
-                this._selects = [this._data.length - 1];
-                this._selects.last = row;
+                this._selects = [this._data.length - 1]; (<any>this._selects).last = row;
                 row.classList.add("tbl_select");
-                if (this.option.select_change) {
-                    event.source = this;
-                    event.row_index = row.tblindex;
-                    this.option.select_change(this);
-                }
+                if (this.option.select_change) { (<any>event).source = this; (<any>event).row_index = row.tblindex; this.option.select_change(this); }
             }
         }
         if ((this.option.page_size != 0 && this.pages[this.pages.length - 1].count >= this.option.page_size)) {
-            var t = [{ row: this._data.length - 1, data: arg }];
-            t.count = 0;
-            this.pages.push(t);
-        }
-        else
+            var t = [{ row: this._data.length - 1, data: arg }]; (<any>t).count = 0; this.pages.push(t);
+        } else
             this.pages[this.pages.length - 1].push({ row: this._data.length - 1, data: arg });
-        if (isarr)
-            this.pages[this.pages.length - 1].count++;
+        if (isarr) this.pages[this.pages.length - 1].count++;
         this.tidy_info();
         return this;
-    };
-    tbl.prototype.insert = function (arg, index) {
+    }
+    insert (arg, index) {
         this._data.splice(index, 0, arg);
         this.do_paging();
         if (this.option.must_select && this._data.length > 0) {
             if (this._selects[0] != undefined) {
                 this._selects[0]++;
-                if (this._selects.last && this._selects.last.nextSibling)
-                    this._selects.last = this._selects.last.nextSibling;
+                if ((<any>this._selects).last && (<any>this._selects).last.nextSibling) (<any>this._selects).last = (<any>this._selects).last.nextSibling;
             }
-        }
-        else
-            this._selects = [];
+        } else this._selects = [];
         this.showpage.call(this);
         return this;
-    };
-    tbl.prototype.bind = function (newdata) {
+    }
+    bind (newdata) {
         this._data = newdata;
-        if (this.option.must_select && this._data.length > 0)
-            this._selects[0] = 0;
-        else
-            this._selects = [];
+        if (this.option.must_select && this._data.length > 0) this._selects[0] = 0; else this._selects = [];
         this.search_result = [];
         this.page = 0;
         this.do_paging();
         this.showpage();
         this.tidy_info();
-    };
-    tbl.prototype.delete = function (index) {
+    }
+    delete (index) {
         this._data.splice(index, 1);
         delete this._edits[index];
         if (this.option.must_select && this._data.length > 0) {
-            if (this._selects[0] == index)
-                this._selects[0] = 0;
-            else if (this._selects[0] > index) {
-                this._selects[0]--;
-                this._selects.last = this._selects.last.previousSibling;
-            }
-            if (this._selects.last && this._selects.last.nextSibling)
-                this._selects.last = this._selects.last.nextSibling;
-        }
-        else
+            if (this._selects[0] == index) this._selects[0] = 0; else if (this._selects[0] > index) { this._selects[0]--; (<any>this._selects).last = (<any>this._selects).last.previousSibling; }
+            if ((<any>this._selects).last && (<any>this._selects).last.nextSibling) (<any>this._selects).last = (<any>this._selects).last.nextSibling;
+        } else
             this.remove_select.call(this, index);
         this.do_paging();
         this.showpage.call(this);
         return this;
-    };
-    tbl.prototype.edit = function (index) {
+    }
+    edit (index) {
         if (index != undefined) {
             this._edits[index] = true;
             var row = this.get_row.call(this, index);
-            if (row)
-                this.set_row(row, row.tblrow, row.classList.contains("tbl_row"));
-        }
-        else {
+            if (row) this.set_row(row, row.tblrow, row.classList.contains("tbl_row"));
+        } else {
             this.option.editable = true;
         }
         return this;
-    };
-    tbl.prototype.cancel_edit = function (index) {
+    }
+    cancel_edit (index) {
         if (index != undefined) {
             delete this._edits[index];
             var row = this.get_row.call(this, index);
-            if (row)
-                this.set_row(row, row.tblrow, row.classList.contains("tbl_row"));
-        }
-        else {
+            if (row) this.set_row(row, row.tblrow, row.classList.contains("tbl_row"));
+        } else {
             this.option.editable = false;
             this._edits = [];
         }
         return this;
-    };
-    tbl.prototype.select = function (index) {
-        if (this.option.select == 0)
-            return;
+    }
+    select (index) {
+        if (this.option.select == 0) return;
         this.remove_select.call(this, index);
         this._selects.push(index);
         var row = this.get_row.call(this, index);
@@ -655,66 +529,57 @@ var tbl = (function () {
             row.classList.add("tbl_select");
         }
         return this;
-    };
-    tbl.prototype.cancel_select = function (index) {
-        if (this.option.select == 0)
-            return;
+    }
+    cancel_select (index) {
+        if (this.option.select == 0) return;
         this.remove_select.call(this, index);
         var row = this.get_row.call(this, index);
         if (row) {
             row.classList.remove("tbl_select");
         }
         return this;
-    };
-    tbl.prototype.clear = function () {
+    }
+    clear () {
         this.page = 0;
         this._selects = [];
         this.search_result = [];
         this._data = [];
-        for (var i = 0; i < this.body.children.length; i++)
-            this.tbl_hide(this.body.children[i]);
+        for (let i = 0; i < this.body.children.length; i++) this.tbl_hide(this.body.children[i]);
         this.do_paging();
         this.showpage();
         this.tidy_info();
         return this;
-    };
+    }
     // for custom row
-    tbl.prototype.create_cell = function () {
+    create_cell () {
         var cell = document.createElement("div");
         cell.className = "tbl_cell";
         return cell;
-    };
-    tbl.prototype.go = function () {
+    }
+    private go() {
         var temp = Number(this.input_pagenumber.value) - 1;
-        if (temp < 0 || temp > this.pages.length - 1) {
-            this.input_pagenumber.value = String(this.page + 1);
-            return;
-        }
+        if (temp < 0 || temp > this.pages.length - 1) { this.input_pagenumber.value = String(this.page + 1); return; }
         this.page = temp;
         this.showpage.call(this);
-    };
-    tbl.prototype.select_change = function (func) {
+    }
+    select_change (func) {
         this.option.select_change = func;
         return this;
-    };
-    tbl.prototype.redraw = function () {
+    }
+    redraw () {
         this.showpage();
-    };
-    tbl.prototype.show = function () {
+    }
+    show () {
         this.div.style.display = "block";
-    };
-    tbl.prototype.hide = function () {
+    }
+    hide () {
         this.div.style.display = "none";
-    };
-    tbl.prototype.init = function () {
-        var _this = this;
+    }
+    init () {
         this.div.innerHTML = "";
         this.load_style();
         this.do_paging();
-        if (this.option.format && !Array.isArray(this.option.format)) {
-            console.error("option.format is not array");
-            throw "option.format is not array";
-        }
+        if (this.option.format && !Array.isArray(this.option.format)) { console.error("option.format is not array"); throw "option.format is not array"; }
         // title
         this.title = document.createElement("div");
         this.title.className = "tbl_title";
@@ -725,34 +590,26 @@ var tbl = (function () {
         this.search = document.createElement("div");
         var input = document.createElement("input");
         input.setAttribute("type", "text");
-        input.tbl = this;
+        (<any>input).tbl = this;
         input.placeholder = "search";
-        input.onchange = function () {
-            _this.search_result = [];
-            if (_this.value) {
-                _this.search_result.searching = true;
-                for (var i in _this._data) {
-                    if (Array.isArray(_this._data[i])) {
-                        for (var _i = 0, _a = _this._data[i]; _i < _a.length; _i++) {
-                            var f = _a[_i];
-                            if (f.toString().indexOf(_this.value) > -1) {
-                                _this.search_result.push({ row: i, data: _this._data[i] });
-                                break;
-                            }
+        input.onchange = ()=> {
+            this.search_result = [];
+            if ((<any>this).value) {
+                (<any>this.search_result).searching = true;
+                for (let i in this._data) {
+                    if (Array.isArray(this._data[i])) {
+                        for (let f of this._data[i]) if (f.toString().indexOf((<any>this).value) > -1) {
+                            this.search_result.push(<any>{ row: i, data: this._data[i] }); break;
                         }
+                    } else if (this._data[i] instanceof Object) if (this._data[i].toString().indexOf((<any>this).value) > -1) {
+                        this.search_result.push(<any>{ row: i, data: this._data[i] });
                     }
-                    else if (_this._data[i] instanceof Object)
-                        if (_this._data[i].toString().indexOf(_this.value) > -1) {
-                            _this.search_result.push({ row: i, data: _this._data[i] });
-                        }
                 }
-                _this.data_page = _this.page;
-                _this.page = 0;
-            }
-            else
-                _this.page = _this.data_page;
-            _this.do_paging.call(_this.tbl);
-            _this.showpage.call(_this.tbl);
+                this.data_page = this.page; this.page = 0;
+            } else
+                this.page = this.data_page;
+            this.do_paging.call((<any>this).tbl);
+            this.showpage.call((<any>this).tbl);
         };
         var btn = document.createElement("button");
         btn.textContent = "🔎";
@@ -765,12 +622,11 @@ var tbl = (function () {
         // header
         this.header = document.createElement("div");
         this.header.className = "tbl_header";
-        for (var item in this.option.format) {
+        for (let item in this.option.format) {
             var field = document.createElement("div");
             field.className = "tbl_header_field";
             field.style.width = this.option.format[item].width;
-            if (this.option.format[item].name)
-                field.textContent = this.option.format[item].name;
+            if (this.option.format[item].name) field.textContent = this.option.format[item].name;
             this.header.appendChild(field);
         }
         this.div.appendChild(this.header);
@@ -792,44 +648,26 @@ var tbl = (function () {
         this.paging.className = "tbl_paging";
         this.ph = document.createElement("div");
         this.ph.textContent = "⇤";
-        this.ph.onselectstart = function () { return false; };
-        this.ph.tbl = this;
-        this.ph.onclick = function () { if (_this.page != 0) {
-            _this.page = 0;
-            _this.showpage.call(_this.ph.tbl);
-        } };
+        this.ph.onselectstart = ()=>{ return false; }
+        (<any>this.ph).tbl = this;
+        this.ph.onclick = ()=> { if (this.page != 0) { this.page = 0; this.showpage.call((<any>this.ph).tbl); } }
         this.pp = document.createElement("div");
         this.pp.textContent = "«";
-        this.pp.onselectstart = function () { return false; };
-        this.pp.tbl = this;
-        this.pp.onclick = function () { if (_this.page > 0) {
-            _this.page--;
-            _this.showpage.call(_this.pp.tbl);
-        } };
+        this.pp.onselectstart = ()=>{ return false; }
+        (<any>this.pp).tbl = this;
+        this.pp.onclick = ()=> { if (this.page > 0) { this.page--; this.showpage.call((<any>this.pp).tbl); } }
         this.pn = document.createElement("div");
         this.pn.textContent = "»";
-        this.pn.onselectstart = function () { return false; };
-        this.pn.tbl = this;
-        this.pn.onclick = function () { if (_this.page < _this.pages.length - 1) {
-            _this.page++;
-            _this.showpage.call(_this.pn.tbl);
-        } };
+        this.pn.onselectstart = ()=>{ return false; }
+        (<any>this.pn).tbl = this;
+        (<any>this.pn).onclick = () => { if (this.page < this.pages.length - 1) { this.page++; this.showpage.call((<any>this.pn).tbl); } }
         this.pe = document.createElement("div");
         this.pe.textContent = "⇥";
-        this.pe.onselectstart = function () { return false; };
-        this.pe.tbl = this;
-        this.pe.onclick = function () { if (_this.page != _this.pages.length - 1) {
-            _this.page = _this.pages.length - 1;
-            _this.showpage.call(_this.pe.tbl);
-        } };
-        if (this.page == 0) {
-            this.ph.disabled = "disabled";
-            this.pp.disabled = true;
-        }
-        if (this._data.length <= this.option.page_size) {
-            this.pn.disabled = "disabled";
-            this.pe.disabled = true;
-        }
+        this.pe.onselectstart = ()=>{ return false; }
+        (<any>this.pe).tbl = this;
+        this.pe.onclick = () => { if (this.page != this.pages.length - 1) { this.page = this.pages.length - 1; this.showpage.call((<any>this.pe).tbl); } }
+        if (this.page == 0) { (<any>this.ph).disabled = "disabled"; (<any>this.pp).disabled = true; }
+        if (this._data.length <= this.option.page_size) { (<any>this.pn).disabled = "disabled"; (<any>this.pe).disabled = true; }
         this.paging.appendChild(this.ph);
         this.paging.appendChild(this.pp);
         this.paging.appendChild(this.pn);
@@ -837,12 +675,10 @@ var tbl = (function () {
         this.input_pagenumber = document.createElement("input");
         this.input_pagenumber.setAttribute("type", "number");
         this.input_pagenumber.setAttribute("min", "1");
-        this.input_pagenumber.onkeypress = function (e) { if (e.keyCode == 13)
-            _this.go(); };
+        this.input_pagenumber.onkeypress = (e:KeyboardEvent)=>{ if (e.keyCode == 13) this.go(); }
         this.paging.appendChild(this.input_pagenumber);
         var gobtn = document.createElement("button");
-        gobtn.textContent = "GO";
-        gobtn.onclick = this.go;
+        gobtn.textContent = "GO"; gobtn.onclick = this.go;
         this.paging.appendChild(gobtn);
         this.footer.style.minHeight = "30px";
         this.footer.appendChild(this.paging);
@@ -851,26 +687,14 @@ var tbl = (function () {
             this.body.style.maxHeight = this.option.max_height;
             this.body.style.overflowY = "auto";
         }
-        if (!this.option.title)
-            this.tbl_hide(this.title);
-        if (!this.option.search)
-            this.tbl_hide(this.search);
-        if (!this.option.header)
-            this.tbl_hide(this.header);
-        if (!this.option.footer)
-            this.tbl_hide(this.footer);
-        if (!this.option.info)
-            this.tbl_hide(this.info);
-        if (!this.option.paging)
-            this.tbl_hide(this.paging);
+        if (!this.option.title) this.tbl_hide(this.title);
+        if (!this.option.search) this.tbl_hide(this.search);
+        if (!this.option.header) this.tbl_hide(this.header);
+        if (!this.option.footer) this.tbl_hide(this.footer);
+        if (!this.option.info) this.tbl_hide(this.info);
+        if (!this.option.paging) this.tbl_hide(this.paging);
         this.tidy_info();
-        if (this.option.must_select && this._data.length > 0)
-            this._selects[0] = 0;
-        else
-            this._selects = [];
+        if (this.option.must_select && this._data.length > 0) this._selects[0] = 0; else this._selects = [];
         this.showpage.call(this);
-    };
-    return tbl;
-}());
-tbl.single = 1;
-tbl.multiselect = 2;
+    }
+}
