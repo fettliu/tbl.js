@@ -139,6 +139,7 @@ var tbl = (function () {
     function tbl(div, option) {
         this._data = [];
         this.search_result = [];
+        this.page = 0;
         this._selects = [];
         this._edits = [];
         this.pages = [];
@@ -729,20 +730,20 @@ var tbl = (function () {
         input.placeholder = "search";
         input.onchange = function () {
             _this.search_result = [];
-            if (_this.value) {
+            if (event.target.value) {
                 _this.search_result.searching = true;
                 for (var i in _this._data) {
                     if (Array.isArray(_this._data[i])) {
                         for (var _i = 0, _a = _this._data[i]; _i < _a.length; _i++) {
                             var f = _a[_i];
-                            if (f.toString().indexOf(_this.value) > -1) {
+                            if (f.toString().indexOf(event.target.value) > -1) {
                                 _this.search_result.push({ row: i, data: _this._data[i] });
                                 break;
                             }
                         }
                     }
                     else if (_this._data[i] instanceof Object)
-                        if (_this._data[i].toString().indexOf(_this.value) > -1) {
+                        if (_this._data[i].toString().indexOf(event.target.value) > -1) {
                             _this.search_result.push({ row: i, data: _this._data[i] });
                         }
                 }
@@ -751,8 +752,8 @@ var tbl = (function () {
             }
             else
                 _this.page = _this.data_page;
-            _this.do_paging.call(_this.tbl);
-            _this.showpage.call(_this.tbl);
+            _this.do_paging();
+            _this.showpage();
         };
         var btn = document.createElement("button");
         btn.textContent = "🔎";
@@ -796,7 +797,7 @@ var tbl = (function () {
         this.ph.tbl = this;
         this.ph.onclick = function () { if (_this.page != 0) {
             _this.page = 0;
-            _this.showpage.call(_this.ph.tbl);
+            _this.showpage();
         } };
         this.pp = document.createElement("div");
         this.pp.textContent = "«";
@@ -804,7 +805,7 @@ var tbl = (function () {
         this.pp.tbl = this;
         this.pp.onclick = function () { if (_this.page > 0) {
             _this.page--;
-            _this.showpage.call(_this.pp.tbl);
+            _this.showpage();
         } };
         this.pn = document.createElement("div");
         this.pn.textContent = "»";
@@ -812,7 +813,7 @@ var tbl = (function () {
         this.pn.tbl = this;
         this.pn.onclick = function () { if (_this.page < _this.pages.length - 1) {
             _this.page++;
-            _this.showpage.call(_this.pn.tbl);
+            _this.showpage();
         } };
         this.pe = document.createElement("div");
         this.pe.textContent = "⇥";
@@ -820,7 +821,7 @@ var tbl = (function () {
         this.pe.tbl = this;
         this.pe.onclick = function () { if (_this.page != _this.pages.length - 1) {
             _this.page = _this.pages.length - 1;
-            _this.showpage.call(_this.pe.tbl);
+            _this.showpage();
         } };
         if (this.page == 0) {
             this.ph.disabled = "disabled";
@@ -868,7 +869,7 @@ var tbl = (function () {
             this._selects[0] = 0;
         else
             this._selects = [];
-        this.showpage.call(this);
+        this.showpage();
     };
     return tbl;
 }());

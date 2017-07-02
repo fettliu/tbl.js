@@ -156,7 +156,7 @@ class tbl {
     private input_pagenumber: HTMLInputElement;
     private _data: any[][] = [];
     private search_result: any[][] = [];
-    private page: number;
+    private page: number = 0;
     private data_page:number;// for search
     private _selects = [];
     private _edits = [];
@@ -594,22 +594,22 @@ class tbl {
         input.placeholder = "search";
         input.onchange = ()=> {
             this.search_result = [];
-            if ((<any>this).value) {
+            if ((<any>event.target).value) {
                 (<any>this.search_result).searching = true;
                 for (let i in this._data) {
                     if (Array.isArray(this._data[i])) {
-                        for (let f of this._data[i]) if (f.toString().indexOf((<any>this).value) > -1) {
+                        for (let f of this._data[i]) if (f.toString().indexOf((<any>event.target).value) > -1) {
                             this.search_result.push(<any>{ row: i, data: this._data[i] }); break;
                         }
-                    } else if (this._data[i] instanceof Object) if (this._data[i].toString().indexOf((<any>this).value) > -1) {
+                    } else if (this._data[i] instanceof Object) if (this._data[i].toString().indexOf((<any>event.target).value) > -1) {
                         this.search_result.push(<any>{ row: i, data: this._data[i] });
                     }
                 }
                 this.data_page = this.page; this.page = 0;
             } else
                 this.page = this.data_page;
-            this.do_paging.call((<any>this).tbl);
-            this.showpage.call((<any>this).tbl);
+            this.do_paging();
+            this.showpage();
         };
         var btn = document.createElement("button");
         btn.textContent = "🔎";
@@ -650,22 +650,22 @@ class tbl {
         this.ph.textContent = "⇤";
         this.ph.onselectstart = ()=>{ return false; }
         (<any>this.ph).tbl = this;
-        this.ph.onclick = ()=> { if (this.page != 0) { this.page = 0; this.showpage.call((<any>this.ph).tbl); } }
+        this.ph.onclick = ()=> { if (this.page != 0) { this.page = 0; this.showpage(); } }
         this.pp = document.createElement("div");
         this.pp.textContent = "«";
         this.pp.onselectstart = ()=>{ return false; }
         (<any>this.pp).tbl = this;
-        this.pp.onclick = ()=> { if (this.page > 0) { this.page--; this.showpage.call((<any>this.pp).tbl); } }
+        this.pp.onclick = ()=> { if (this.page > 0) { this.page--; this.showpage(); } }
         this.pn = document.createElement("div");
         this.pn.textContent = "»";
         this.pn.onselectstart = ()=>{ return false; }
         (<any>this.pn).tbl = this;
-        (<any>this.pn).onclick = () => { if (this.page < this.pages.length - 1) { this.page++; this.showpage.call((<any>this.pn).tbl); } }
+        (<any>this.pn).onclick = () => { if (this.page < this.pages.length - 1) { this.page++; this.showpage(); } }
         this.pe = document.createElement("div");
         this.pe.textContent = "⇥";
         this.pe.onselectstart = ()=>{ return false; }
         (<any>this.pe).tbl = this;
-        this.pe.onclick = () => { if (this.page != this.pages.length - 1) { this.page = this.pages.length - 1; this.showpage.call((<any>this.pe).tbl); } }
+        this.pe.onclick = () => { if (this.page != this.pages.length - 1) { this.page = this.pages.length - 1; this.showpage(); } }
         if (this.page == 0) { (<any>this.ph).disabled = "disabled"; (<any>this.pp).disabled = true; }
         if (this._data.length <= this.option.page_size) { (<any>this.pn).disabled = "disabled"; (<any>this.pe).disabled = true; }
         this.paging.appendChild(this.ph);
@@ -695,6 +695,6 @@ class tbl {
         if (!this.option.paging) this.tbl_hide(this.paging);
         this.tidy_info();
         if (this.option.must_select && this._data.length > 0) this._selects[0] = 0; else this._selects = [];
-        this.showpage.call(this);
+        this.showpage();
     }
 }
