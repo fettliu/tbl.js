@@ -5,6 +5,9 @@
     This is javascript implement of table that based div.
     Designed for Microsoft Edge / Google Chrome.
 
+    modify:
+        2017/8/1 clear innerHTML and set className before drow row.
+
     main features:
         not a number center.
         data bind.
@@ -409,8 +412,10 @@ class tbl {
                 if (Array.isArray(row_data)) {
                     this.set_row.call(this, row, row_data, j = !j);
                 } else if (row_data instanceof Object) {// custom
-                    if (row_data.draw && row_data.draw instanceof Function)
+                    if (row_data.draw && row_data.draw instanceof Function) {
+                        row.innerHTML = ""; row.className = j?"tbl_rowx":"tbl_row";
                         row_data.draw.call(row_data, this, row, j);
+                    }
                     j = !j;
                 } else {// grouping
                     this.set_group(row, row_data); j = false;
@@ -447,8 +452,11 @@ class tbl {
             if (isarr) {
                 this.set_row.call(this, row, arg, row.previousSibling ? !row.previousSibling.classList.contains("tbl_rowx") : false);
             } else if (arg instanceof Object) {// custom
-                if (arg.draw && arg.draw instanceof Function)
-                    arg.draw.call(arg, this, row, row.previousSibling ? !row.previousSibling.classList.contains("tbl_rowx") : false);
+                if (arg.draw && arg.draw instanceof Function) {
+                    var color = row.previousSibling ? !row.previousSibling.classList.contains("tbl_rowx") : false;
+                    row.innerHTML = ""; row.className = color ? "tbl_rowx" : "tbl_row";
+                    arg.draw.call(arg, this, row, color);
+                }
             } else {
                 this.set_group(row, arg);
             }
